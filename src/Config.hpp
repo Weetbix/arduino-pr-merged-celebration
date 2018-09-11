@@ -36,12 +36,16 @@ class Config
             DynamicJsonBuffer jsonBuffer;
             JsonObject& json = jsonBuffer.parseObject(fileBuffer.get());
 
-            //json.printTo(Serial);
+            Serial.println("JSON config contents: ");
+            json.printTo(Serial);
 
             if (json.success())
             {
               // Set all the config options from the json file
               const char* token = json[GITHUB_TOKEN_JSON_KEY];
+              Serial.println( "Loaded config value:" );
+              Serial.println(token);
+
               setGithubToken(token);
 
               configFile.close();
@@ -60,7 +64,7 @@ class Config
       // Create the json object
       DynamicJsonBuffer jsonBuffer;
       JsonObject& json = jsonBuffer.createObject();
-      json[GITHUB_TOKEN_JSON_KEY] = &githubToken;
+      json[GITHUB_TOKEN_JSON_KEY] = githubToken.c_str();
 
       // Write the contents to a file
       File configFile = SPIFFS.open(CONFIG_PATH, "w");
