@@ -7,13 +7,25 @@
 #include <ESP8266WebServer.h>
 #include <WiFiManager.h>
 
+#include "Config.hpp"
+
 // Config options for the AP point the
 // duino hosts if it cant connect to wifi.
 const char* ACCESS_POINT_NAME = "PR-Celebration";
 const char* ACCESS_POINT_PW = "mergemaster";
 
+bool configHasChanged = false;
+Config config;
+
+void saveConfigCallback()
+{
+  configHasChanged = true;
+}
+
 void setup()
 {
+  Serial.begin(115200);
+  Serial.println();
   pinMode(LED_BUILTIN, OUTPUT);
 
   // Turn on the LED while we are configuring wifi...
