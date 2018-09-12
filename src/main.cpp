@@ -12,7 +12,7 @@
 
 // Number of seconds after reset during which a
 // subseqent reset will be considered a double reset.
-const int DRD_TIMEOUT = 10;
+const int DRD_TIMEOUT = 3;
 const int DRD_ADDRESS = 0;
 DoubleResetDetector resetDetector(DRD_TIMEOUT, DRD_ADDRESS);
 
@@ -27,6 +27,16 @@ Config config;
 void saveConfigCallback()
 {
   configHasChanged = true;
+}
+
+// Callback for when the wifi manager enters AP configuration
+// mode (ie cant connect with previous credentials or no
+// credentials found).
+// Here we tell the double reset to be ignored, as we are already
+// in configuration mode if we get this far.
+void configModeCallback(WiFiManager *unusedWifiManager)
+{
+  resetDetector.stop();
 }
 
 void setup()
@@ -52,6 +62,7 @@ void setup()
   WiFiManagerParameter githubToken("github-token", "Github OAuth Token", "", 255);
   wifiManager.addParameter(&githubToken);
   wifiManager.setSaveConfigCallback(saveConfigCallback);
+  wifiManager.setAPCallback(configModeCallback);
 
   if( config.loadFromFilesystem() )
   {
