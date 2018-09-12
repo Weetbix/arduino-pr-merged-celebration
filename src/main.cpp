@@ -58,13 +58,20 @@ void setup()
     resetDetector.stop();
   }
 
+  const bool didLoadConfig = config.loadFromFilesystem();
+
   // Add our custom paramaters to the UI
-  WiFiManagerParameter githubToken("github-token", "Github OAuth Token", "", 255);
+  WiFiManagerParameter githubToken(
+    "github-token",
+    "Github OAuth Token",
+    config.getGithubToken().c_str(),  // Add the current token as the default value
+    255
+  );
   wifiManager.addParameter(&githubToken);
   wifiManager.setSaveConfigCallback(saveConfigCallback);
   wifiManager.setAPCallback(configModeCallback);
 
-  if( config.loadFromFilesystem() )
+  if(didLoadConfig)
   {
     // Attempt to connect to the previous wifi network.
     // If it's not found, we will instead host an access
