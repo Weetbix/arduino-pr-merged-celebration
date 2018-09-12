@@ -43,9 +43,6 @@ class Config
             {
               // Set all the config options from the json file
               const char* token = json[GITHUB_TOKEN_JSON_KEY];
-              Serial.println( "Loaded config value:" );
-              Serial.println(token);
-
               setGithubToken(token);
 
               configFile.close();

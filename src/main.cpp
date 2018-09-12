@@ -6,8 +6,15 @@
 #include <DNSServer.h>
 #include <ESP8266WebServer.h>
 #include <WiFiManager.h>
+#include <DoubleResetDetector.h>
 
 #include "Config.hpp"
+
+// Number of seconds after reset during which a
+// subseqent reset will be considered a double reset.
+const int DRD_TIMEOUT = 10;
+const int DRD_ADDRESS = 0;
+DoubleResetDetector resetDetector(DRD_TIMEOUT, DRD_ADDRESS);
 
 // Config options for the AP point the
 // duino hosts if it cant connect to wifi.
@@ -31,18 +38,22 @@ void setup()
   // Turn on the LED while we are configuring wifi...
   digitalWrite(LED_BUILTIN, LOW);
 
-  const bool didLoadConfig = config.loadFromFilesystem();
-  Serial.println( "Did load config?" );
-  Serial.println( didLoadConfig );
-
   WiFiManager wifiManager;
+
+  if(resetDetector.detectDoubleReset())
+  {
+    Serial.println("Double reset detected. Removing wifi config");
+    wifiManager.resetSettings();
+    // Then do not consider the next reset a double reset
+    resetDetector.stop();
+  }
+
+  // Add our custom paramaters to the UI
   WiFiManagerParameter githubToken("github-token", "Github OAuth Token", "", 255);
   wifiManager.addParameter(&githubToken);
   wifiManager.setSaveConfigCallback(saveConfigCallback);
 
-  // wifiManager.resetSettings();
-
-  if( didLoadConfig )
+  if( config.loadFromFilesystem() )
   {
     // Attempt to connect to the previous wifi network.
     // If it's not found, we will instead host an access
@@ -65,29 +76,24 @@ void setup()
       ACCESS_POINT_PW
     );
   }
-  // When we get to here, the wifi is connected :)
 
   if(configHasChanged)
   {
-    Serial.println( "Config did change" );
-
+    Serial.println( "Config parameters were changed, saving new config file" );
     config.setGithubToken(githubToken.getValue());
     config.saveToFilesystem();
-  }
-  else
-  {
-    Serial.println( "config has changed not called" );
   }
 
   // If we get here, we have connected to the wifi.
   // Turn the LED off.
   digitalWrite(LED_BUILTIN, HIGH);
-
-  Serial.println( "final token value" );
-  Serial.println( config.getGithubToken().c_str() );
 }
 
 void loop()
 {
   delay(1000);
+
+  // Allow the double reset detector to know when
+  // the timeout has expired.
+  resetDetector.loop();
 }
