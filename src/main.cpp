@@ -9,6 +9,7 @@
 #include <DoubleResetDetector.h>
 
 #include "Config.hpp"
+#include "Github.hpp"
 
 // Number of seconds after reset during which a
 // subseqent reset will be considered a double reset.
@@ -109,9 +110,15 @@ void setup()
 
 void loop()
 {
-  delay(1000);
+  Github github(config.getGithubToken());
 
-  // Allow the double reset detector to know when
-  // the timeout has expired.
-  resetDetector.loop();
+  while(true)
+  {
+    github.refresh();
+    delay(5000);
+
+    // Allow the double reset detector to know when
+    // the timeout has expired.
+    resetDetector.loop();
+  }
 }
