@@ -21,11 +21,45 @@ class Github
       }
 
       // Fetch events
+      const std::string& path = API_ROOT + "/users/" + username + "/events?access_token=" + token;
+      HTTPClient http;
+      http.begin(path.c_str(), GITHUB_CERT_THUMBPRINT.c_str());
+      if(!lastEtag.empty())
+      {
+        http.addHeader("If-None-Match", lastEtag.c_str());
+      }
+
+      const char* headerKeys[] = { "ETag", "X-RateLimit-Remaining" };
+      http.collectHeaders(headerKeys, 2);
+
+      const int httpCode = http.GET();
+      Serial.print("Http Code: ");
+      Serial.println(httpCode);
+
+      // Log all the headers.
+      for(int i = 0; i < http.headers(); i++)
+      {
+        Serial.print(http.headerName(i));
+        Serial.print(": " );
+        Serial.println(http.header(i));
+      }
+
+      // If the code is 200, we know there is some updated data
+      // otherwis it would be 304 (HTTP_CODE_NOT_MODIFIED)
+      if(httpCode == HTTP_CODE_OK)
+      {
+        // Update the etag
+        lastEtag = http.header("ETag").c_str();
+
+        // auto payload = http.getString();
+      }
     }
 
   private:
     std::string username;
     std::string token;
+
+    std::string lastEtag;
 
     bool setUsernameFromToken()
     {
