@@ -114,7 +114,15 @@ void loop()
 
   while(true)
   {
+    // Turn the LED on while we are updating...
+    digitalWrite(LED_BUILTIN, LOW);    
     github.refresh();
+    if(github.prWasMerged())
+    {
+      Serial.println("!!! MERGE DETECTED !!!");
+    }
+    digitalWrite(LED_BUILTIN, HIGH);
+
     delay(5000);
 
     // Allow the double reset detector to know when

@@ -126,11 +126,15 @@ class Github
         // so set the flag if its a merge event!
         if(event.isMergeEvent)
         {
-          Serial.println("Found MERGE! event");
           didMergePR = true;
           break;
         }
       }
+    }
+
+    bool prWasMerged()
+    {
+      return didMergePR;
     }
 
   private:
