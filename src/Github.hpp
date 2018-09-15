@@ -45,12 +45,7 @@ struct EventStreamItem
   EventStreamItem(Stream& stream) : id(0), ETag(""), isMergeEvent(false)
   {
     const String idStr = parseJSONStringFromStream(stream, "id");
-    Serial.print( "ID from stream: " );
-    Serial.println(idStr);
-
     const String type = parseJSONStringFromStream(stream, "type");
-    Serial.print( "type from stream: " );
-    Serial.println(type);
 
     if( idStr.length() && type.length() )
     {
