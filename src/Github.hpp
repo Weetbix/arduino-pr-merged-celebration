@@ -9,64 +9,116 @@ const std::string API_ROOT = "https://api.github.com";
 // Used for making secure http get requests
 const std::string GITHUB_CERT_THUMBPRINT = "5f f1 60 31 09 04 3e f2 90 d2 b0 8a 50 38 04 e8 37 9f bc 76";
 
+// Consumes a stream up until a json string key/value and 
+// returns its value if its found, otherwise returns an empty string
+String parseJSONStringFromStream(Stream& stream, const String& propName)
+{
+    const String searchString = "\"" + propName + "\":\"";
+    const bool found = stream.find(searchString.c_str());
+
+    if(found)
+    {
+      return stream.readStringUntil('"');
+    }
+    return "";
+}
+
+// Consumes a stream up until a json boolean key/value and 
+// returns its its boolean value if its found, otherwise returns false
+bool parseJSONBoolFromStream(Stream& stream, const String& propName)
+{
+    const String searchString = "\"" + propName + "\":";
+    const bool found = stream.find(searchString.c_str());
+
+    if(found)
+    {
+      const String& value = stream.readStringUntil(',');
+
+      // The values are either 'true', 'false' so we can just 
+      // check the first character
+      return value.length() && value.charAt(0) == 't';
+    }
+}
+
 struct EventStreamItem
 {
   EventStreamItem() : id(0), ETag(""), id_str( "" ), isMergeEvent(false) {};
 
-  EventStreamItem(Stream& stream)
+  EventStreamItem(Stream& stream) : id(0), ETag(""), id_str( "" ), isMergeEvent(false)
   {
-      DynamicJsonBuffer jsonBuffer;
-      // StaticJsonBuffer<20000> jsonBuffer;
-      const JsonArray& events = jsonBuffer.parseArray(stream, 3);
+    const String idStr = parseJSONStringFromStream(stream, "id");
+    Serial.print( "ID from stream: " );
+    Serial.println(idStr);
 
-      Serial.print( "Reaming memory :( " );
-      Serial.println( system_get_free_heap_size() );
-      Serial.print("Array size:" );
-      Serial.println(events.size());
+    const String type = parseJSONStringFromStream(stream, "type");
+    Serial.print( "type from stream: " );
+    Serial.println(type);
 
-      if(events.size() > 0)
+    if( idStr.length() && type.length() )
+    {
+      // convert the ID strong to unsigned long long
+      id = strtoull(idStr.c_str(), 0, 10);
+      if( parseJSONBoolFromStream(stream, "merged") )
       {
-        const auto& event = events[0];
-        id = strtoull(event["id"], 0, 10);
-        id_str = event["id"].as<String>();
-
-        Serial.print( "Event type: "); Serial.println( event["type"].as<String>() );
-        Serial.print( "action: "); Serial.println( event["payload"]["action"].as<String>() );
-        Serial.print( "merged"); Serial.println( event["payload"]["pull_request"]["merged"].as<bool>() );
-
-        isMergeEvent =
-          event["type"] == "PullRequestEvent" &&
-          event["payload"]["action"] == "closed" &&
-          event["payload"]["pull_request"]["merged"] == true;
+        isMergeEvent = true;
       }
+    }
   }
+  
+  // EventStreamItem(Stream& stream)
+  // {
+  //     DynamicJsonBuffer jsonBuffer;
+  //     // StaticJsonBuffer<20000> jsonBuffer;
+  //     const JsonArray& events = jsonBuffer.parseArray(stream, 3);
 
-  EventStreamItem(const String& jsonResponse)
-  {
-      DynamicJsonBuffer jsonBuffer;
-      const JsonArray& events = jsonBuffer.parseArray(jsonResponse);
+  //     Serial.print( "Reaming memory :( " );
+  //     Serial.println( system_get_free_heap_size() );
+  //     Serial.print("Array size:" );
+  //     Serial.println(events.size());
 
-      Serial.print( "Reaming memory :( " );
-      Serial.println( system_get_free_heap_size() );
-      Serial.print("Array size:" );
-      Serial.println(events.size());
+  //     if(events.size() > 0)
+  //     {
+  //       const auto& event = events[0];
+  //       id = strtoull(event["id"], 0, 10);
+  //       id_str = event["id"].as<String>();
 
-      if(events.size() > 0)
-      {
-        const auto& event = events[0];
-        id = strtoull(event["id"], 0, 10);
-        id_str = event["id"].as<String>();
+  //       Serial.print( "Event type: "); Serial.println( event["type"].as<String>() );
+  //       Serial.print( "action: "); Serial.println( event["payload"]["action"].as<String>() );
+  //       Serial.print( "merged"); Serial.println( event["payload"]["pull_request"]["merged"].as<bool>() );
 
-        Serial.print( "Event type: "); Serial.println( event["type"].as<String>() );
-        Serial.print( "action: "); Serial.println( event["payload"]["action"].as<String>() );
-        Serial.print( "merged"); Serial.println( event["payload"]["pull_request"]["merged"].as<bool>() );
+  //       isMergeEvent =
+  //         event["type"] == "PullRequestEvent" &&
+  //         event["payload"]["action"] == "closed" &&
+  //         event["payload"]["pull_request"]["merged"] == true;
+  //     }
+  // }
 
-        isMergeEvent =
-          event["type"] == "PullRequestEvent" &&
-          event["payload"]["action"] == "closed" &&
-          event["payload"]["pull_request"]["merged"] == true;
-      }
-  }
+  // EventStreamItem(const String& jsonResponse)
+  // {
+  //     DynamicJsonBuffer jsonBuffer;
+  //     const JsonArray& events = jsonBuffer.parseArray(jsonResponse);
+
+  //     Serial.print( "Reaming memory :( " );
+  //     Serial.println( system_get_free_heap_size() );
+  //     Serial.print("Array size:" );
+  //     Serial.println(events.size());
+
+  //     if(events.size() > 0)
+  //     {
+  //       const auto& event = events[0];
+  //       id = strtoull(event["id"], 0, 10);
+  //       id_str = event["id"].as<String>();
+
+  //       Serial.print( "Event type: "); Serial.println( event["type"].as<String>() );
+  //       Serial.print( "action: "); Serial.println( event["payload"]["action"].as<String>() );
+  //       Serial.print( "merged"); Serial.println( event["payload"]["pull_request"]["merged"].as<bool>() );
+
+  //       isMergeEvent =
+  //         event["type"] == "PullRequestEvent" &&
+  //         event["payload"]["action"] == "closed" &&
+  //         event["payload"]["pull_request"]["merged"] == true;
+  //     }
+  // }
 
   bool isMergeEvent;
   uint64_t id;
