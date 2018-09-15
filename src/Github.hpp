@@ -51,7 +51,8 @@ struct EventStreamItem
     {
       // convert the ID strong to unsigned long long
       id = strtoull(idStr.c_str(), 0, 10);
-      if( parseJSONBoolFromStream(stream, "merged") )
+      if( type.equals("PullRequestEvent") &&
+          parseJSONBoolFromStream(stream, "merged") )
       {
         isMergeEvent = true;
       }
