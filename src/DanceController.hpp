@@ -12,7 +12,6 @@ int restingPosition(const int min, const int max)
 // and using a given easing function
 void moveFrom(Servo& servo, int from, int to, const int speed, EasingFunction easingFunction)
 {
-    const int step = 1;
     const int steps = from > to ? from - to : to - from;
     const int distance = from < to ? steps : -steps;
 

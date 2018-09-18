@@ -62,13 +62,13 @@ void setup()
 
   WiFiManager wifiManager;
 
-  if(resetDetector.detectDoubleReset())
-  {
-    Serial.println("Double reset detected. Removing wifi config");
-    wifiManager.resetSettings();
-    // Then do not consider the next reset a double reset
-    resetDetector.stop();
-  }
+  // if(resetDetector.detectDoubleReset())
+  // {
+  //   Serial.println("Double reset detected. Removing wifi config");
+  //   wifiManager.resetSettings();
+  //   // Then do not consider the next reset a double reset
+  //   resetDetector.stop();
+  // }
 
   const bool didLoadConfig = config.loadFromFilesystem();
 
