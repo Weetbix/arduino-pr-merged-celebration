@@ -10,6 +10,7 @@
 
 #include "Config.hpp"
 #include "Github.hpp"
+#include "DanceController.hpp"
 
 // Number of seconds after reset during which a
 // subseqent reset will be considered a double reset.
@@ -21,9 +22,19 @@ DoubleResetDetector resetDetector(DRD_TIMEOUT, DRD_ADDRESS);
 // duino hosts if it cant connect to wifi.
 const char* ACCESS_POINT_NAME = "PR-Celebration";
 const char* ACCESS_POINT_PW = "mergemaster";
+const int GITHUB_TIME_BETWEEN_QUERIES = 3000;
 
 bool configHasChanged = false;
 Config config;
+
+const int SERVO_CONTROL_PIN = 4;
+const int SERVO_MIN_ANGLE = 65;
+const int SERVO_MAX_ANGLE = 115;
+DanceController danceController(
+  SERVO_CONTROL_PIN,
+  SERVO_MIN_ANGLE,
+  SERVO_MAX_ANGLE
+);
 
 void saveConfigCallback()
 {
@@ -115,15 +126,16 @@ void loop()
   while(true)
   {
     // Turn the LED on while we are updating...
-    digitalWrite(LED_BUILTIN, LOW);    
+    digitalWrite(LED_BUILTIN, LOW);
     github.refresh();
-    if(github.prWasMerged())
-    {
-      Serial.println("!!! MERGE DETECTED !!!");
-    }
     digitalWrite(LED_BUILTIN, HIGH);
 
-    delay(5000);
+    if(github.prWasMerged())
+    {
+      danceController.randomDance();
+    }
+
+    delay(GITHUB_TIME_BETWEEN_QUERIES);
 
     // Allow the double reset detector to know when
     // the timeout has expired.
