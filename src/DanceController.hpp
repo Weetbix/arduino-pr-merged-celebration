@@ -117,6 +117,7 @@ class DanceController
           minSpeed(minSpeed), maxSpeed(maxSpeed)
     {
         servo.attach(servoPin);
+        servo.write(restingPosition(minAngle, maxAngle));
     }
 
     // Generate a random dance by chaining together several other
