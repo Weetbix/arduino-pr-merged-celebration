@@ -27,7 +27,7 @@ const int GITHUB_TIME_BETWEEN_QUERIES = 3000;
 bool configHasChanged = false;
 Config config;
 
-const int SERVO_CONTROL_PIN = 4;
+const int SERVO_CONTROL_PIN = D3;
 const int SERVO_MIN_ANGLE = 65;
 const int SERVO_MAX_ANGLE = 115;
 DanceController danceController(
